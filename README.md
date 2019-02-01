@@ -1,6 +1,6 @@
 # PyBlast
 
-PyBlast is small library using mostly BioPython, designed to process easily local blast requests and global alignment on multiple cores. 
+PyBlast is a small library using mostly BioPython, designed to process easily local blast requests and global alignment on multiple cores. 
 
 ## Local alignment
 
