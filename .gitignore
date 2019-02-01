@@ -1,0 +1,5 @@
+build/*
+dist/*
+pyblast.egg-*
+pyblast/__pycache__/*
+*.DS_Store
