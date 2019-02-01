@@ -84,4 +84,4 @@ For multicore (`ncore` > 1) Blast analysis, the query fasta file is splitted int
 
 Below is shown the time used to blast 3000 random *S. cerevisiae* protein sequences against the *S. cerevisiae* proteom ([SGD](https://downloads.yeastgenome.org/sequence/S288C_reference/orf_protein/)), full data (50x50) can be found in the `blast_time` directory. Note that while `num_thread` does not speed up that much execution time, increasing only the number of ncore can lead to memory overflow.
 
-![blast_performance](/Users/jsgounot/Documents/Script/SFTP_ST/PyLibs/PyPan/blast_time/time.50.png)
+![blast_performance](https://github.com/jsgounot/PyBlast/blob/master/blast_time/time.50.png)
