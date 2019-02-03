@@ -214,7 +214,7 @@ class GlobalAlignment() :
             return sum(1 if b1 == b2 else 0 for b1, b2 in zip(query, subject))
 
     @staticmethod
-    def run_pair(query, subject, * args, gfun=None, ** kwargs) :
+    def run_pair(query, subject, * args, gfun="globalxx", ** kwargs) :
         gfun = GlobalAlignment.get_alignfun(gfun)
         alns = gfun(query.seq, subject.seq, * args, ** kwargs)
         return query, subject, alns
@@ -260,9 +260,7 @@ class Local2Global() :
         # Blast local alignments
         bc = BCLine6(bkind, query=self.query, db=self.subject, ** bkwargs)
         bres = bc.run(chunksize=chunksize, ncore=ncore)
-        print (bres)
         if match_fun : bres = match_fun(bres)
-        print (bres); exit()
 
         # retrieve subject and query sequences
         seq_que = {seq.id : seq for seq in self.retrieve_seq(query=True, ids=set(bres["qseqid"].unique()))}
