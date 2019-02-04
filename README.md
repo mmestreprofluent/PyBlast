@@ -46,7 +46,7 @@ gal = GlobalAlignment(pairs)
 print (gal.run(ncore=4))
 ```
 
-By default, results are only output alignments. Tou can also use the callback function `run_pair_identity` which will automatically determine query and subject similarity of each alignments.
+By default, results are only output alignments. You can also use the callback function `run_pair_identity` which will automatically determine query and subject similarity of each alignments.
 
 ```python3
 records = SeqIO.parse(query, "fasta")

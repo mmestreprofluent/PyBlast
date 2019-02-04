@@ -139,7 +139,8 @@ class BCLine6(BCLine) :
         current = kwargs.get("outfmt", "").split(" ")
         current = current[1:] if len(current) > 1 else []
 
-        toadd = ["qseqid", "sseqid", "pident", "nident", "length", "slen", "qlen", "qstart", "qend", "sstart", "send", "positive"]
+        toadd = ["qseqid", "sseqid", "pident", "nident", "length", "slen", 
+        "qlen", "qstart", "qend", "sstart", "send", "positive"]
         used = list(set(current) | set(toadd))
 
         kwargs["outfmt"] = "'%s'" %("6 " + " ".join(used))
