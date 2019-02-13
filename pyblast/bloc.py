@@ -95,7 +95,7 @@ class BCLine() :
         utils.run_cmdline(cmd)
 
     @staticmethod
-    def clean_fasta_nucl(fname, minsize=None) :
+    def clean_fasta(fname, astmp=True) :
         # Change header to match correct id with _
         # Replace ? to N
         # Return a new fasta (tmp)
@@ -109,7 +109,7 @@ class BCLine() :
 
         fdata = SeqIO.parse(fname, "fasta")
         fdata = (clean_seqrecord(sr) for sr in fdata)
-        return utils.TMPFasta(fdata)
+        return utils.TMPFasta(fdata) if astmp else fdata
 
 
 class TMPBCLine() :

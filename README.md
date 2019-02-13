@@ -4,7 +4,7 @@ PyBlast is a small library using mostly BioPython, designed to process easily lo
 
 ## Local alignment
 
-A blast command line can be launched using `BCLine`. By default only one core is used, unless `ncore` is provided (see below for more info about how multiprocessing is done).
+A blast command line can be launched using `BCLine`. By default only one core is used, unless `ncore` is provided (see below for more informations about how multiprocessing is done).
 
 ```python3
 from pyblast import BCLine
