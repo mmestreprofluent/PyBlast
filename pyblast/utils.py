@@ -34,11 +34,17 @@ class TMPFname() :
 
 class TMPFasta(TMPFname) :
 
-    def __init__(self, data, delete=True, ** kwargs) :
+    def __init__(self, data, delete=True, wodesc=False, ** kwargs) :
         super(TMPFasta, self).__init__(delete=delete, ext="fa", ** kwargs)
-        if data : self.write(data)
+        if data : self.write(data, wodesc=wodesc)
 
-    def write(self, data, mode="w") :
+    @staticmethod
+    def remove_desc(feature) :
+        feature.description = ""
+        return feature
+
+    def write(self, data, mode="w", wodesc=False) :
+        if wodesc : data = (TMPFasta.remove_desc(feat) for feat in data)
         with open(self.fname, mode) as handle :
             SeqIO.write(data, handle, "fasta")
 
