@@ -1,4 +1,4 @@
-import os, tempfile, time
+import os, tempfile, time, sys
 from multiprocessing import Pool, cpu_count
 from subprocess import check_output
 
