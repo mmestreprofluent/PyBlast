@@ -263,11 +263,11 @@ class BCLineHSPFuse(BCLine) :
 
             qposit, qident = BCLineHSPFuse.get_hsp_ident(aln, query=True)
             sposit, sident = BCLineHSPFuse.get_hsp_ident(aln, query=False)
-            positions = {"qident" : qident, "qposit" : qposit, "sident" : sident, "sposit" : sposit}
+            positions = {"qide" : qident, "qpos" : qposit, "side" : sident, "spos" : sposit}
             data[qname][sname].append(positions)
 
         df = []
-        kinds = ["qident", "qposit", "sident", "sposit"]
+        kinds = ["qide", "qpos", "side", "spos"]
 
         for qname, subject in data.items() :
             for sname, all_positions in subject.items() :
@@ -291,10 +291,10 @@ class BCLineHSPFuse(BCLine) :
         if df.empty : return df
 
         df["qlen"], df["slen"] = df["qname"].map(qlength), df["sname"].map(qlength)
-        df["qident_prc"] = df["qident"] * 100 / df["qlen"]
-        df["qposit_prc"] = df["qposit"] * 100 / df["qlen"]
-        df["sident_prc"] = df["sident"] * 100 / df["slen"]
-        df["sposit_prc"] = df["sposit"] * 100 / df["slen"]
+        df["qide_prc"] = df["qide"] * 100 / df["qlen"]
+        df["qpos_prc"] = df["qpos"] * 100 / df["qlen"]
+        df["side_prc"] = df["side"] * 100 / df["slen"]
+        df["spos_prc"] = df["spos"] * 100 / df["slen"]
 
         df = df[sorted(df.columns)]
         return df
