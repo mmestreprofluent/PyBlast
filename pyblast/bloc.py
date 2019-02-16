@@ -284,13 +284,13 @@ class BCLineHSPFuse(BCLine) :
                 union = {kind : len(set.union(* [positions[kind]
                 for positions in all_positions])) for kind in kinds}
 
-                info = {"qname" : qname, "sname" : sname, "#hsp" : hsp_count, ** union, ** intersection}
+                info = {"qseqid" : qname, "sseqid" : sname, "#hsp" : hsp_count, ** union, ** intersection}
                 df.append(info)
 
         df = pd.DataFrame(df)
         if df.empty : return df
 
-        df["qlen"], df["slen"] = df["qname"].map(qlength), df["sname"].map(qlength)
+        df["qlen"], df["slen"] = df["qseqid"].map(qlength), df["sseqid"].map(qlength)
         df["qide_prc"] = df["qide"] * 100 / df["qlen"]
         df["qpos_prc"] = df["qpos"] * 100 / df["qlen"]
         df["side_prc"] = df["side"] * 100 / df["slen"]
