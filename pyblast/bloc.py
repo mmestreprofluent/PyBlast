@@ -1,11 +1,12 @@
 from io import StringIO
 from itertools import zip_longest
 from copy import deepcopy
+from collections import defaultdict
 
 import pandas as pd
 
 from Bio.Seq import Seq
-from Bio.Blast import Applications
+from Bio.Blast import Applications, NCBIXML
 from Bio import SeqIO
 from Bio import pairwise2
 
@@ -60,32 +61,35 @@ class BCLine() :
             yield [seq for seq in group if seq is not None]
 
     @utils.ftiming
-    def run_single_core(self, funcname="Blast command line (single)") :
+    def run_single_core(self, funcname="Blast command line (single)", postfun=None) :
         print (self)
-        return self.cline()
+        res = self.cline()
+        return postfun(res) if postfun else res
 
     @staticmethod
-    def run_single_core_tmp(tmpbcline) :
+    def run_single_core_tmp(tmpbcline, postfun=None) :
         # since we're not able to pickle a BioPython commande line
         # we're juste gonna execute it as a string
+        
         print (str(tmpbcline))
-        return (utils.run_cmdline(str(tmpbcline), funcname="Blast command line (ncore)"), None)
+        res = (utils.run_cmdline(str(tmpbcline), funcname="Blast command line (ncore)"), None)
+        return postfun(res) if postfun else res
 
-    def run_chunked(self, ncore, chunksize=200) :
+    def run_chunked(self, ncore, chunksize=200, postfun=None) :
         fdata = SeqIO.parse(self.query, "fasta")
         fdata = self.grouper_fdata(fdata, chunksize)
         queries = (utils.TMPFasta(group) for group in fdata)
 
         fun = BCLine.run_single_core_tmp
-        args = [utils.FunArgs(fun, TMPBCLine(self, query)) for query in queries]
+        args = [utils.FunArgs(fun, TMPBCLine(self, query), postfun=postfun) for query in queries]
         
         return utils.mproc(args, ncore)
 
-    def run(self, ncore=1, chunksize=200) :
+    def run(self, ncore=1, chunksize=200, postfun=None) :
         if ncore == 1 :
-            return self.run_single_core()
+            return self.run_single_core(postfun=postfun)
         else :
-            return self.run_chunked(ncore, chunksize)
+            return self.run_chunked(ncore, chunksize, postfun=postfun)
 
     @staticmethod
     def mbdb(db, ** kwargs) :
@@ -110,7 +114,6 @@ class BCLine() :
         fdata = SeqIO.parse(fname, "fasta")
         fdata = (clean_seqrecord(sr) for sr in fdata)
         return utils.TMPFasta(fdata) if astmp else fdata
-
 
 class TMPBCLine() :
 
@@ -177,12 +180,8 @@ class BCLine6(BCLine) :
         mask = df.groupby("qseqid")[column].transform(fun)
         return df[df[column] >= mask] 
 
-    def run(self, * args,  ** kwargs) :
-        res = super(BCLine6, self).run(* args, ** kwargs)
-        return self.treat_res(res)
-
     @staticmethod
-    def query_mdb(bkind, query, dbs, best=False, chunksize=200, ncore=1,
+    def query_mdbs(bkind, query, dbs, best=False, chunksize=200, ncore=1,
         mcolumn="qpos", nmatches=1, ** kwargs) :
 
         res = []
@@ -196,6 +195,127 @@ class BCLine6(BCLine) :
         res = pd.concat(res)
 
         return BCLine6.get_best(res, column=mcolumn, nmatches=nmatches) if best else res
+
+    def run(self, * args,  ** kwargs) :
+        res = super(BCLine6, self).run(* args, ** kwargs)
+        return self.treat_res(res)
+
+class BCLineHSPFuse(BCLine) :
+
+    def __init__(self, bkind, ** kwargs) :
+
+        kwargs = self.add_specifiers(kwargs)
+        super(BCLineHSPFuse, self).__init__(bkind, ** kwargs)
+
+    def add_specifiers(self, kwargs) :
+        current = kwargs.get("outfmt", "").split(" ")
+        current = current[1:] if len(current) > 1 else []
+
+        kwargs["outfmt"] = "'%s'" %("5 " + " ".join(current))
+        return kwargs
+
+    @staticmethod
+    def parse_xml(data) :
+        f = StringIO(data)
+        try : return [record for record in NCBIXML.parse(f)]
+        except ValueError : return [] # empty results
+
+    @staticmethod
+    def iter_hsp(records) :
+        for record in records :
+            qname, qlength = record.query, record.query_length
+            for aln in record.alignments :
+                sname, slength = aln.hit_def, aln.length
+                for hsp in aln.hsps :
+                    yield (qname, qlength), (sname, slength), hsp
+
+    @staticmethod
+    def get_hsp_ident(hsp, query=True) :
+        start = hsp.query_start if query else hsp.sbjct_start
+        end = hsp.query_end if query else hsp.sbjct_end
+        sequence = hsp.query if query else hsp.sbjct
+        reverse = start > end
+
+        positives, ident = set(), set()
+        psequence = -1
+
+        for idx, letter in enumerate(sequence) :
+            letter_match = hsp.match[idx]
+
+            if letter_match != ' ' :
+                position = start - psequence if reverse else psequence + start
+                positives.add(position)
+                if letter_match != "+" : ident.add(position)
+
+            psequence = psequence + 1 if letter != "-" else psequence
+
+        return positives, ident
+
+    @staticmethod
+    def get_sum_sim_all(records) :
+        qlength, slength = {}, {}
+        data = defaultdict(lambda : defaultdict(list))
+
+        for query, subject, aln in BCLineHSPFuse.iter_hsp(records) :
+            qname, sname = query[0], subject[0]
+            qlen, slen = query[1], subject[1]
+            qlength[qname], qlength[sname] = qlen, slen
+
+            qposit, qident = BCLineHSPFuse.get_hsp_ident(aln, query=True)
+            sposit, sident = BCLineHSPFuse.get_hsp_ident(aln, query=False)
+            positions = {"qident" : qident, "qposit" : qposit, "sident" : sident, "sposit" : sposit}
+            data[qname][sname].append(positions)
+
+        df = []
+        kinds = ["qident", "qposit", "sident", "sposit"]
+
+        for qname, subject in data.items() :
+            for sname, all_positions in subject.items() :
+
+                hsp_count = len(all_positions)
+
+                if len(all_positions) > 1 :
+                    intersection = {kind + "_inter" : len(set.intersection(* [positions[kind]
+                    for positions in all_positions])) for kind in kinds}
+
+                else :
+                    intersection = {kind + "_inter" : 0 for kind in kinds}
+
+                union = {kind : len(set.union(* [positions[kind]
+                for positions in all_positions])) for kind in kinds}
+
+                info = {"qname" : qname, "sname" : sname, "#hsp" : hsp_count, ** union, ** intersection}
+                df.append(info)
+
+        df = pd.DataFrame(df)
+        if df.empty : return df
+
+        df["qlen"], df["slen"] = df["qname"].map(qlength), df["sname"].map(qlength)
+        df["qident_prc"] = df["qident"] * 100 / df["qlen"]
+        df["qposit_prc"] = df["qposit"] * 100 / df["qlen"]
+        df["sident_prc"] = df["sident"] * 100 / df["slen"]
+        df["sposit_prc"] = df["sposit"] * 100 / df["slen"]
+
+        df = df[sorted(df.columns)]
+        return df
+
+    @staticmethod
+    def post_treat(res) :
+        out, err = res
+        records = BCLineHSPFuse.parse_xml(out)
+        return BCLineHSPFuse.get_sum_sim_all(records)
+
+    def treat_res(self, res) :
+
+        if isinstance(res, list) :
+            # multiprocessing res
+            return pd.concat(res)
+
+        return res
+
+    def run(self, * args,  ** kwargs) :
+        res = super(BCLineHSPFuse, self).run(* args, postfun=BCLineHSPFuse.post_treat, ** kwargs)
+        return self.treat_res(res)
 
 class GlobalAlignment() :
 
