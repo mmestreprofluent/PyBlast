@@ -78,6 +78,19 @@ res = l2g.run("blastp", ncore=4, chunksize=20, gkwargs={"one_alignment_only" : T
 print (res)
 ```
 
+## Merging HSP
+
+In some case, merging HSPs from the same query / subject pair can provide a faster solution instead of global alignments. In this case, all HSPs from the same pair are mixed together and the identity and similarity values correspond to all positions which have matched in at least one HSP. Nevertheless, note that it could **not** provide similar results than global alignments and can leads to *wrong* similarity values. This method can be used with the `BCLineHSPFuse` object, which performs both the blast query and the result analysis in each core.
+
+```python3
+from pyblast import BCLineHSPFuse
+
+bopt = {"evalue" : "2", "word_size" : "3"}
+bc = BCLineHSPFuse("blastp", query=fname, subject=fname, ** bopt)
+res = bc.run(ncore=4)
+print (res)
+```
+
 ## Some notes about multiprocessing
 
 For multicore (`ncore` > 1) Blast analysis, the query fasta file is splitted into several sub fasta files with a predifined sequences number called `chunksize` and the results are afterward merged together. This option can be combined with the blast option `num_threads`. However, while an increasing number of threads allows a lower memory consomption and increase execution speed, splitting the fasta file and running multiple blast tasks is way faster. 
