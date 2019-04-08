@@ -51,7 +51,8 @@ class BCLine() :
     def __str__(self) :
         return str(self.cline)
 
-    def grouper_fdata(self, fdata, gsize) :
+    @staticmethod
+    def grouper_fdata(fdata, gsize) :
         # based on itertools recipy
         # https://docs.python.org/3.6/library/itertools.html#itertools-recipes
 
@@ -77,7 +78,7 @@ class BCLine() :
 
     def run_chunked(self, ncore, chunksize=200, postfun=None) :
         fdata = SeqIO.parse(self.query, "fasta")
-        fdata = self.grouper_fdata(fdata, chunksize)
+        fdata = BCLine.grouper_fdata(fdata, chunksize)
         queries = (utils.TMPFasta(group) for group in fdata)
 
         fun = BCLine.run_single_core_tmp
