@@ -2,6 +2,30 @@
 
 PyBlast is a small library using mostly BioPython, designed to process easily local blast requests and global alignment on multiple cores. 
 
+### Installation
+
+The library was written using python 3.6 but should work on lower version of python 3, however I did not test that.
+
+Install first biopython (using conda for example) :
+
+```bash
+conda install -c anaconda biopython
+```
+
+Using pip
+
+```bash
+pip install git+https://github.com/jsgounot/PyBlast.git
+```
+
+Or download / clone the github
+
+```bash
+git clone https://github.com/jsgounot/PyBlast.git
+cd PyBlast
+python setup.py install --user
+```
+
 ## Local alignment
 
 A blast command line can be launched using `BCLine`. By default only one core is used, unless `ncore` is provided (see below for more informations about how multiprocessing is done).
