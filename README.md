@@ -28,7 +28,7 @@ python setup.py install --user
 
 ## Local alignment
 
-A blast command line can be launched using `BCLine`. By default only one core is used, unless `ncore` is provided (see below for more informations about how multiprocessing is done).
+A blast command line can be launched using `BCLine`. By default only one core is used, unless `ncore` is provided (see below for more informations about how multiprocessing is done). If multiple cores are used, the default chunksize (corresponding to the maximum number of sequences in the query file of each process) is set to 200.
 
 ```python3
 from pyblast import BCLine
