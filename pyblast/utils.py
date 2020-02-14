@@ -59,6 +59,7 @@ def ftiming(f):
     def wrap(* args, ** kwargs):      
         
         funcname = kwargs.pop("funcname", f.__name__)
+        funcname = funcname or "Unknown funcname"
 
         time1 = time.time()
         ret = f(* args, ** kwargs)
@@ -70,8 +71,12 @@ def ftiming(f):
 
     return wrap
 
+def run_cmdline(cmdline, funcname=None, quiet=False) :
+    if not quiet : return run_cmdline_loud(cmdline, funcname=funcname)
+    return check_output(cmdline, universal_newlines=True, shell=True)
+
 @ftiming
-def run_cmdline(cmdline, funcname=None) :
+def run_cmdline_loud(cmdline, funcname=None) :
     return check_output(cmdline, universal_newlines=True, shell=True)
 
 """
@@ -101,7 +106,7 @@ class Multiprocess() :
         pool = Pool(ncore)
         func = Multiprocess.lambda_fun
         fargs = ((farg, ) for farg in fargs)
- 
+
         try :
             data = pool.starmap(func, fargs)
             pool.close()

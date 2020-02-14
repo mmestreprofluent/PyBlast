@@ -62,35 +62,35 @@ class BCLine() :
             yield [seq for seq in group if seq is not None]
 
     @utils.ftiming
-    def run_single_core(self, funcname="Blast command line (single)", postfun=None) :
-        print (self)
+    def run_single_core(self, funcname="Blast command line (single)", postfun=None, quiet=False) :
+        if not quiet : print (self)
         res = self.cline()
         return postfun(res) if postfun else res
 
     @staticmethod
-    def run_single_core_tmp(tmpbcline, postfun=None) :
+    def run_single_core_tmp(tmpbcline, postfun=None, quiet=False) :
         # since we're not able to pickle a BioPython commande line
         # we're juste gonna execute it as a string
         
-        print (str(tmpbcline))
-        res = (utils.run_cmdline(str(tmpbcline), funcname="Blast command line (ncore)"), None)
+        if not quiet : print (str(tmpbcline))
+        res = (utils.run_cmdline(str(tmpbcline), funcname="Blast command line (ncore)", quiet=quiet), None)
         return postfun(res) if postfun else res
 
-    def run_chunked(self, ncore, chunksize=200, postfun=None) :
+    def run_chunked(self, ncore, chunksize=200, postfun=None, quiet=False) :
         fdata = SeqIO.parse(self.query, "fasta")
         fdata = BCLine.grouper_fdata(fdata, chunksize)
         queries = (utils.TMPFasta(group) for group in fdata)
 
         fun = BCLine.run_single_core_tmp
-        args = [utils.FunArgs(fun, TMPBCLine(self, query), postfun=postfun) for query in queries]
+        args = [utils.FunArgs(fun, TMPBCLine(self, query), postfun=postfun, quiet=quiet) for query in queries]
         
         return utils.mproc(args, ncore)
 
-    def run(self, ncore=1, chunksize=200, postfun=None) :
+    def run(self, ncore=1, chunksize=200, postfun=None, quiet=False) :
         if ncore == 1 :
-            return self.run_single_core(postfun=postfun)
+            return self.run_single_core(postfun=postfun, quiet=quiet)
         else :
-            return self.run_chunked(ncore, chunksize, postfun=postfun)
+            return self.run_chunked(ncore, chunksize, postfun=postfun, quiet=quiet)
 
     @staticmethod
     def mbdb(db, ** kwargs) :
@@ -378,10 +378,10 @@ class Local2Global() :
         if ids : return (seq for seq in seqs if seq.id in ids)
         return seqs
 
-    def run(self, bkind, gargs=(), gkwargs={}, bkwargs={}, match_fun=BCLine6.get_best, chunksize=200, ncore=1) :
+    def run(self, bkind, gargs=(), gkwargs={}, bkwargs={}, match_fun=BCLine6.get_best, chunksize=200, ncore=1, quiet=False) :
         # Blast local alignments
         bc = BCLine6(bkind, query=self.query, db=self.subject, ** bkwargs)
-        bres = bc.run(chunksize=chunksize, ncore=ncore)
+        bres = bc.run(chunksize=chunksize, ncore=ncore, quiet=quiet)
         if match_fun : bres = match_fun(bres)
 
         # retrieve subject and query sequences
