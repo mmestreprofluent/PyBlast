@@ -115,6 +115,27 @@ res = bc.run(ncore=4)
 print (res)
 ```
 
+## Columns meaning
+
+Below are explained the signification of columns added by `pyblast`. Note that some of them can be linked to either the query (q) or the subject (s). Example : `qlen` corresponding to the size of the query sequence. 
+
+| Column name 	| Meaning                                                                       	|
+|-------------	|-------------------------------------------------------------------------------	|
+| len         	| Size of the sequence                                                          	|
+| length      	| Length of the part covered by the HSP                                         	|
+| ide         	| Percentage of the sequence size (len) covered by identical element (nident)   	|
+| cov         	| Percentage of the sequence size (len) covered by the HSP (length)             	|
+| pos         	| Percentage of the sequence size (len) covered by positive elements (positive) 	|
+|             	|                                                                               	|
+| gid         	| Number of identical element from global alignment analysis                    	|
+| gLEN        	| Size of the global alignment                                                  	|
+| gPID        	| This division : gid / gLEN                                                    	|
+| gXPID       	| Percentage of the gid divided by either the query or subject length           	|
+| gSCORE      	| Score of the global alignment                                                 	|
+|             	|                                                                               	|
+| ide_prc     	| Percentage of identical elements compared to the total length                 	|
+| pos_prc     	| Percentage of positive elements compared to the total length                  	|
+
 ## Some notes about multiprocessing
 
 For multicore (`ncore` > 1) Blast analysis, the query fasta file is splitted into several sub fasta files with a predifined sequences number called `chunksize` and the results are afterward merged together. This option can be combined with the blast option `num_threads`. However, while an increasing number of threads allows a lower memory consomption and increase execution speed, splitting the fasta file and running multiple blast tasks is way faster. 
