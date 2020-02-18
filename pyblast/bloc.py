@@ -79,7 +79,7 @@ class BCLine() :
     def run_chunked(self, ncore, chunksize=200, postfun=None, quiet=False) :
         fdata = SeqIO.parse(self.query, "fasta")
         fdata = BCLine.grouper_fdata(fdata, chunksize)
-        queries = (utils.TMPFasta(group) for group in fdata)
+        queries = (utils.TMPFasta(group, quiet=quiet) for group in fdata)
 
         fun = BCLine.run_single_core_tmp
         args = [utils.FunArgs(fun, TMPBCLine(self, query), postfun=postfun, quiet=quiet) for query in queries]
@@ -141,7 +141,7 @@ class BCLine6(BCLine) :
 
     def add_specifiers(self, kwargs) :
         current = kwargs.get("outfmt", "").split(" ")
-        current = current[1:] if len(current) > 1 else []
+        current = [value for value in current if value]
 
         toadd = ["qseqid", "sseqid", "pident", "nident", "length", "slen", 
         "qlen", "qstart", "qend", "sstart", "send", "positive"]
@@ -156,13 +156,19 @@ class BCLine6(BCLine) :
             # multiprocessing res
             return pd.concat([self.treat_res(r) for r in res])
 
-        cols = list(self.spec)
-
         out, err = res
         if err : print (err)
 
         out = StringIO(out)
-        df = pd.read_csv(out, sep="\t", names=cols)
+        df = pd.read_csv(out, sep="\t", names=self.spec)
+
+        # check if a column is full of na
+        # may happend if one gave a wrong outfmt
+        for column in df.columns :
+            if df[column].isnull().all() and not df.empty :
+                print ("""WARNING : An output column is full of nan :
+                    This could be a result of a wrong outfmt key,
+                    and may break result outputs\n""")
 
         df["qlength"] = abs(df["qend"] - df["qstart"]) + 1
         df["slength"] = abs(df["send"] - df["sstart"]) + 1
@@ -176,10 +182,23 @@ class BCLine6(BCLine) :
         return df
 
     @staticmethod
-    def get_best(df, column="qpos", nmatches=10) :
+    def get_best(df, query="qseqid", column="qpos", nmatches=10, use_max=True) :
+        if use_max :
+            return BCLine6.get_best_max(df, query, column, nmatches)
+        else :
+            return BCLine6.get_best_min(df, query, column, nmatches)
+
+    @staticmethod
+    def get_best_max(df, query="qseqid", column="qpos", nmatches=10) :
         fun = (lambda serie : serie.nlargest(nmatches).min()) if nmatches > 1 else max
-        mask = df.groupby("qseqid")[column].transform(fun)
-        return df[df[column] >= mask] 
+        mask = df.groupby(query)[column].transform(fun)
+        return df[df[column] >= mask]
+
+    @staticmethod
+    def get_best_min(df, query="qseqid", column="qpos", nmatches=10) :
+        fun = (lambda serie : serie.smallest(nmatches).max()) if nmatches > 1 else min
+        mask = df.groupby(query)[column].transform(fun)
+        return df[df[column] <= mask]    
 
     @staticmethod
     def query_mdbs(bkind, query, dbs, best=False, chunksize=200, ncore=1,

@@ -6,11 +6,12 @@ from Bio import SeqIO
 
 class TMPFname() :
 
-    def __init__(self, delete=True, ext="", ** kwargs) :
+    def __init__(self, delete=True, ext="", quiet=False, ** kwargs) :
         suffix = self.format_ext(ext)
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix, ** kwargs)
         self.fname = tmp.name 
         self.delete = delete
+        self.quiet = quiet
 
     def __str__(self) :
         return self.fname
@@ -26,7 +27,7 @@ class TMPFname() :
 
     def remove(self) :
         if self.exist() and self.delete :
-            print ("Delete temporary file at : %s" %(self.fname))
+            if not self.quiet : print ("Delete temporary file at : %s" %(self.fname))
             os.remove(self.fname)
 
     def __del__(self) :

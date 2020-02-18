@@ -54,6 +54,15 @@ print (bcl.run(ncore=4, chunksize=20))
 
 The dataframe includes several columns, such as identity, coverage and percentage of each of these columns compared to the query and subject size.
 
+One can add supplemental outfmt columns :
+
+```python3
+bcl = BCLine6("blastn", query=query, subject=db, outfmt="evalue")
+res = bcl.run(ncore=1, chunksize=100, quiet=False)
+```
+
+However, please be aware that wrong outfmt names in the outfmt mostly lead to treatment errors, since blast will simply ignore wrong outfmt names and that pyblast is not able to check which supplemental outfmt names are correct or not.
+
 ## Global alignment
 
 Global alignment is provided by the BioPython [`pairwise2`](http://biopython.org/DIST/docs/tutorial/Tutorial.html#htoc86) module. By default, the `pairwise2.align.globalxx` function is used. Before using this function, I highly encourage to read the biopython documentation about this module since most of the results while depend of the input function and parameters. Within PyBlast, local alignments can be launched using the `GlobalAlignment` object which took as parameter an iterable of `SeqRecord` pairs. In this example, we will just make local alignments of every pairs of a single fasta file.
