@@ -1,3 +1,4 @@
+import sys
 from io import StringIO
 from itertools import zip_longest
 from copy import deepcopy
@@ -11,6 +12,8 @@ from Bio import SeqIO
 from Bio import pairwise2
 
 from pyblast import utils
+
+OSP = sys.platform
 
 class BlocBlastException(Exception) :
     pass
@@ -147,7 +150,11 @@ class BCLine6(BCLine) :
         "qlen", "qstart", "qend", "sstart", "send", "positive"]
         used = list(set(current) | set(toadd))
 
-        kwargs["outfmt"] = "'%s'" %("6 " + " ".join(used))
+        if OSP == "darwin" :
+            kwargs["outfmt"] = "'%s'" %("6 " + " ".join(used))
+        else :
+            kwargs["outfmt"] = "%s" %("6 " + " ".join(used))
+
         return kwargs, used
 
     def treat_res(self, res) :
