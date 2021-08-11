@@ -152,3 +152,34 @@ For multicore (`ncore` > 1) Blast analysis, the query fasta file is splitted int
 Below is shown the time used to blast 3000 random *S. cerevisiae* protein sequences against the *S. cerevisiae* proteom ([SGD](https://downloads.yeastgenome.org/sequence/S288C_reference/orf_protein/)), full data (50x50) can be found in the `blast_time` directory. Note that while `num_thread` does not speed up that much execution time, increasing only the number of ncore can lead to memory overflow.
 
 ![blast_performance](https://github.com/jsgounot/PyBlast/blob/master/blast_time/time.50.png)
+
+## Known issues
+
+**Multicore issue with BCLine6 and MacOS**
+
+The multicore library might have some issue depending on your operating system, especially on Mac OS. If you encounter errors when using `ncore > 1`, you can add `macos_formating=True` in the BCLine6 constructor:
+
+```python3
+from pyblast import BCLine6
+
+query = "path/to/your/query"
+db = "path/to/your/blastdb"
+
+bcl = BCLine6("blastn", query=query, db=db, macos_formating=False)
+print (bcl.run(ncore=4, chunksize=500, quiet=False))
+```
+
+**RuntimeError:freeze_support()**
+
+[Please see this](https://stackoverflow.com/questions/18204782/runtimeerror-on-windows-trying-python-multiprocessing) or [this](https://stackoverflow.com/questions/60691363/runtimeerrorfreeze-support-on-mac). You have to enclose your codelines into a main function as such:
+
+```python3
+from pyblast import BCLine6
+
+if __name__ == "__main__":   
+	query = "path/to/your/query"
+	db = "path/to/your/blastdb"
+
+	bcl = BCLine6("blastn", query=query, db=db, macos_formating=False)
+	print (bcl.run(ncore=4, chunksize=500, quiet=False))
+```

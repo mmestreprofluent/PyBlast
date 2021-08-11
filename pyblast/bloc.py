@@ -3,6 +3,7 @@ from io import StringIO
 from itertools import zip_longest
 from copy import deepcopy
 from collections import defaultdict
+from itertools import product
 
 import pandas as pd
 
@@ -87,7 +88,7 @@ class BCLine() :
         fun = BCLine.run_single_core_tmp
         args = [utils.FunArgs(fun, TMPBCLine(self, query), postfun=postfun, quiet=quiet) for query in queries]
         
-        return utils.mproc(args, ncore)
+        return utils.mproc(args, ncore, quiet)
 
     def run(self, ncore=1, chunksize=200, postfun=None, quiet=False) :
         if ncore == 1 :
@@ -150,7 +151,11 @@ class BCLine6(BCLine) :
         "qlen", "qstart", "qend", "sstart", "send", "positive"]
         used = list(set(current) | set(toadd))
 
-        if OSP == "darwin" :
+        # This is weird, in some mac the usual command line leads
+        # to an error but not for all of them
+        # I will set this as an option instead
+
+        if kwargs.pop("macos_formating", False) == True :
             kwargs["outfmt"] = "'%s'" %("6 " + " ".join(used))
         else :
             kwargs["outfmt"] = "%s" %("6 " + " ".join(used))
@@ -385,6 +390,13 @@ class GlobalAlignment() :
         kwargs["one_alignment_only"] = True
         kwargs["score_only"] = False
         return GlobalAlignment.run_pair(query, subject, * args, ** kwargs)
+
+    @staticmethod
+    def product_fasta(query, subject) :
+        query   = SeqIO.parse(query, "fasta")
+        subject = SeqIO.parse(query, "fasta")
+        pairs = product(query, subject)
+        return GlobalAlignment(pairs)
 
     def run(self, * args, ncore=1, callback=None, ** kwargs) :
         callback = callback or GlobalAlignment.run_pair

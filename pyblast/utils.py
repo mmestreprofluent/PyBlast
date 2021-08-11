@@ -100,8 +100,8 @@ class Multiprocess() :
     def lambda_fun(farg) :
         return farg.launch_fun()
  
-    def run(self, fargs, ncore=1) :
-        print ("ncore : %i - available : %i" %(ncore, cpu_count()))
+    def run(self, fargs, ncore=1, quiet=False) :
+        if not quiet: print ("ncore : %i - available : %i" %(ncore, cpu_count()))
         if ncore == 1 : return [farg.launch_fun() for farg in fargs]
  
         pool = Pool(ncore)
@@ -119,6 +119,6 @@ class Multiprocess() :
             pool.terminate()
             sys.exit()
  
-def mproc(fargs, ncore=1) :
+def mproc(fargs, ncore=1, quiet=False) :
     mp = Multiprocess()
-    return mp.run(fargs, ncore=ncore)
+    return mp.run(fargs, ncore=ncore, quiet=quiet)
