@@ -194,21 +194,21 @@ class BCLine6(BCLine) :
         return df
 
     @staticmethod
-    def get_best(df, query="qseqid", column="qpos", nmatches=10, use_max=True) :
+    def get_best(df, query="qseqid", column="qpos", nmatches=1, use_max=True) :
         if use_max :
             return BCLine6.get_best_max(df, query, column, nmatches)
         else :
             return BCLine6.get_best_min(df, query, column, nmatches)
 
     @staticmethod
-    def get_best_max(df, query="qseqid", column="qpos", nmatches=10) :
+    def get_best_max(df, query="qseqid", column="qpos", nmatches=1) :
         fun = (lambda serie : serie.nlargest(nmatches).min()) if nmatches > 1 else max
         mask = df.groupby(query)[column].transform(fun)
         return df[df[column] >= mask]
 
     @staticmethod
-    def get_best_min(df, query="qseqid", column="qpos", nmatches=10) :
-        fun = (lambda serie : serie.smallest(nmatches).max()) if nmatches > 1 else min
+    def get_best_min(df, query="qseqid", column="qpos", nmatches=1) :
+        fun = (lambda serie : serie.nsmallest(nmatches).max()) if nmatches > 1 else min
         mask = df.groupby(query)[column].transform(fun)
         return df[df[column] <= mask]    
 
